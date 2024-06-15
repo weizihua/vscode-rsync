@@ -200,3 +200,6 @@ Here is and example config for WSL:
 ## Mac OS Notes
 
 If you are using the `shell` option to do something like `ssh -p 123` you will most likely have the set `sync-rsync.executableShell` to `/bin/bash`
+
+
+npm install -g @vscode/vsce
