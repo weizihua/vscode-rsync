@@ -21,6 +21,7 @@ import { Config, Site } from './Config';
 import * as child from 'child_process';
 import { exists, lstat } from 'fs';
 import * as util from 'util';
+import vscode = require('vscode');
 
 //Shim for older VSCode
 require("util.promisify").shim();
@@ -145,14 +146,13 @@ const syncSite = async function (site: Site, config: Config, { down, dry }: { do
         .flags(site.flags)
         .progress(config.showProgress);
 
-    if (site.include.length > 0) {
-        rsync = rsync.include(site.include);
-    }
-
     if (site.exclude.length > 0) {
         rsync = rsync.exclude(site.exclude);
     }
 
+    if (site.include.length > 0) {
+        rsync = rsync.include(site.include);
+    }
 
     if (site.shell !== undefined) {
         rsync = rsync.shell(site.shell);
@@ -174,11 +174,18 @@ const syncSite = async function (site: Site, config: Config, { down, dry }: { do
         return rtn;
     }
 
+    vscWindow.showInformationMessage("同步....")
     let rtn: number = 0;
     if(down) {
-        if(site.preSyncDown) rtn = await runPrePost(site, config, site.preSyncDown,"preSyncDown");
+        if(site.preSyncDown) {
+            vscWindow.showInformationMessage("同步结束")
+            rtn = await runPrePost(site, config, site.preSyncDown,"preSyncDown");
+        }
     } else {
-        if(site.preSyncUp) rtn = await runPrePost(site, config, site.preSyncUp,"preSyncUp"); 
+        if(site.preSyncUp) {
+            vscWindow.showInformationMessage("同步开始")
+            rtn = await runPrePost(site, config, site.preSyncUp,"preSyncUp")
+        }; 
     }
 
     rtn = await runSync(rsync, paths, site, config);
@@ -190,7 +197,7 @@ const syncSite = async function (site: Site, config: Config, { down, dry }: { do
             if(site.postSyncUp) rtn = await runPrePost(site, config, site.postSyncUp,"postSyncUp"); 
             if(site.afterSync) {
                 rtn = await runPrePost(site, config, site.afterSync,"afterSync"); 
-                vscWindow.showInformationMessage("afterSync will be deprecated use postSyncUp");
+                vscWindow.showInformationMessage("afterSync 将被弃用，请使用 postSyncUp");
             }
         }
         return true;
@@ -234,6 +241,8 @@ const sync = async function (config: Config, { down, dry }: { down: boolean, dry
     }
 };
 
+
+
 const syncFile = async function (config: Config, file: string, down: boolean): Promise<void> {
 
     statusBar.color = 'mediumseagreen';
@@ -244,6 +253,8 @@ const syncFile = async function (config: Config, file: string, down: boolean): P
     statusBar.command = 'sync-rsync.killSync';
 
     let sync_file = false;
+
+    let resultPath = file;
 
     for (let site of config.sites) {
 
@@ -263,9 +274,22 @@ const syncFile = async function (config: Config, file: string, down: boolean): P
 
         let path = site.localPath;
 
+        console.log("---1--- path: ", path, "file: ", file)
+
         file = config.translatePath(file);
 
+        console.log("---2--- path: ", path, "file: ", file)
+
         if (file.startsWith(path)) {
+
+            // 提取 basePath 的最后一个目录名
+            const lastDir = path.split('/').filter(Boolean).pop();
+
+            // 提取 basePath 之外的相对路径
+            const relativePath = file.replace(path, "");
+
+            // 连接最后一个目录名和相对路径
+            resultPath = lastDir ? `${lastDir}/${relativePath}` : relativePath;
 
             sync_file = true;
 
@@ -329,7 +353,7 @@ const syncFile = async function (config: Config, file: string, down: boolean): P
             statusBar.color = undefined;
             statusBar.text = createStatusText('$(check)');
             if (config.notification) {
-                vscWindow.showInformationMessage("Synced " + file);
+                vscWindow.showInformationMessage("Synced: " + resultPath);
             }
         } else {
             if (config.autoShowOutputOnError) {

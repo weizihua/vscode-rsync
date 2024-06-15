@@ -203,3 +203,41 @@ If you are using the `shell` option to do something like `ssh -p 123` you will m
 
 
 npm install -g @vscode/vsce
+
+### settings.json
+
+```json
+// Place your settings in this file to overwrite default and user settings.
+{
+  "files.exclude": {
+      "out": false // set this to true to hide the "out" folder with the compiled JS files
+  },
+  "search.exclude": {
+      "out": true // set this to false to include "out" folder in search results
+  },
+  "typescript.tsdk": "./node_modules/typescript/lib", // we want to use the TS server from our node_modules folder to control its version
+
+  "sync-rsync.onSave": true,
+  "sync-rsync.onSaveIndividual": true,
+  "sync-rsync.sites": [
+    {
+      "localPath": "${workspaceRoot}",
+      "remotePath": "wei@aidev:/home/wei/temp/LLaMA-Factory"
+    },
+  ],
+  "sync-rsync.executableShell": "/bin/bash",
+  "sync-rsync.shell": "ssh -p 22  -i ~/.ssh/id_rsa",
+
+  "sync-rsync.exclude":[
+    ".git/",
+    "cache/",
+    "user.config",
+    "saves/",
+  ],
+  "sync-rsync.include": [
+    "*/",
+    "**/*.php"
+  ],
+}
+
+```

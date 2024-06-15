@@ -346,7 +346,8 @@
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
     "compile": "tsc -watch -p ./",
-    "package": "vsce package --no-dependencies",
+    "package": "npm run vscode:prepublish && vsce package",
+    "package:no": "vsce package --no-dependencies",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "node ./node_modules/vscode/bin/test"
   },
